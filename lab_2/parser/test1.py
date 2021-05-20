@@ -1,21 +1,35 @@
-a = 10
+string = "a+b+c=10"
+list = ["shop", "petshop", 2021]
+
+def tuple_returner(a, b, c, d):
+    x = a + b
+    y = c + d
+    return (x, y)
+
+k=30
+
+class B:
+    a = 666
+    b = [333, 666, 'www']
+
+objects = [{}, set(), tuple(), []]
+
 def func(x):
-    return a + x
+    c=90
+    return k + x +c
 
-lmbd = lambda c: c + 10
+lmbd = lambda x: x*x^2
 
-class MyClass():
-    a = 10
+class Counter():
+    a = 1
     def my_func(x):
         return x
 
-string = "This is test string"
-list = ["abc", 34, 40, "male"]
+
 dict = {
-  "brand": "Ford",
-  "model": "Mustang",
-  "year": 1964
+  "GROUP": "NIRVANA",
+  "year": 1987
 }
 
-def func_with_defaults(a=1, b=3):
-    return a + b
+def func_with_defaults(y=55, z=20):
+    return y*z
