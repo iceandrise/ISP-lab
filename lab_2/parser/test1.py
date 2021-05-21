@@ -30,6 +30,3 @@ dict = {
   "GROUP": "NIRVANA",
   "year": 1987
 }
-
-def func_with_defaults(y=55, z=20):
-    return y*z

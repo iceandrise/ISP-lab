@@ -64,14 +64,6 @@ def class_to_dict(cls):
             elif inspect.isfunction(st_args[i]):
                 if st_args[i] not in f_found:
                     args[i] = function_to_dict(st_args[i])
-            elif isinstance(st_args[i], staticmethod):
-                if st_args[i].__func__ not in f_found:
-                    args[i] = smethod_to_dict(st_args[i])
-            elif isinstance(st_args[i], classmethod):
-                if st_args[i].__func__ not in f_found:
-                    args[i] = cmethod_to_dict(st_args[i])
-            elif inspect.ismodule(st_args[i]):
-                args[i] = module_to_dict(st_args[i])
             elif is_instance(st_args[i]):
                 args[i] = object_to_dict(st_args[i])
             elif isinstance(
@@ -100,10 +92,6 @@ def object_to_dict(obj):
     }
 
 
-def module_to_dict(obj):
-    return {"module_type": obj.__name__}
-
-
 def gather_gls(obj, obj_code):
     global f_found
     f_found[obj] = True
@@ -115,14 +103,6 @@ def gather_gls(obj, obj_code):
             elif inspect.isfunction(obj.__globals__[i]):
                 if obj.__globals__[i] not in f_found:
                     gls[i] = function_to_dict(obj.__globals__[i])
-            elif isinstance(obj.__globals__[i], staticmethod):
-                if obj.__globals__[i].__func__ not in f_found:
-                    gls[i] = smethod_to_dict(obj.__globals__[i])
-            elif isinstance(obj.__globals__[i], classmethod):
-                if obj.__globals__[i].__func__ not in f_found:
-                    gls[i] = cmethod_to_dict(obj.__globals__[i])
-            elif inspect.ismodule(obj.__globals__[i]):
-                gls[i] = module_to_dict(obj.__globals__[i])
             elif is_instance(obj.__globals__[i]):
                 gls[i] = object_to_dict(obj.__globals__[i])
             elif isinstance(
@@ -138,13 +118,6 @@ def gather_gls(obj, obj_code):
     return gls
 
 
-def smethod_to_dict(obj):
-    return {"static_method_type": function_to_dict(obj.__func__)}
-
-
-def cmethod_to_dict(obj):
-    return {"class_method_type": function_to_dict(obj.__func__)}
-
 
 def function_to_dict(obj):
     gls = gather_gls(obj, obj.__code__)
@@ -153,16 +126,10 @@ def function_to_dict(obj):
         "function_type": {
             "__globals__": gls,
             "__name__": obj.__name__,
-            "__code__": code_to_dict(obj.__code__),
             "__defaults__": obj.__defaults__,
             "__closure__": obj.__closure__,
         }
     }
-
-
-def cell_to_dict(obj):
-    return {"cell_type": obj.cell_contents}
-
 
 def set_to_dict(obj):
     return {"set_type": list(obj)}
@@ -174,30 +141,6 @@ def frozenset_to_dict(obj):
 
 def tuple_to_dict(obj):
     return {"tuple_type": list(obj)}
-
-
-def code_to_dict(obj):
-    return {
-        "code_type": {
-            "co_argcount": obj.co_argcount,
-            "co_posonlyargcount": obj.co_posonlyargcount,
-            "co_kwonlyargcount": obj.co_kwonlyargcount,
-            "co_nlocals": obj.co_nlocals,
-            "co_stacksize": obj.co_stacksize,
-            "co_flags": obj.co_flags,
-            "co_code": obj.co_code,
-            "co_consts": obj.co_consts,
-            "co_names": obj.co_names,
-            "co_varnames": obj.co_varnames,
-            "co_filename": obj.co_filename,
-            "co_name": obj.co_name,
-            "co_firstlineno": obj.co_firstlineno,
-            "co_lnotab": obj.co_lnotab,
-            "co_freevars": obj.co_freevars,
-            "co_cellvars": obj.co_cellvars,
-        }
-    }
-
 
 def _dumps(obj):
     global f_found
@@ -233,24 +176,10 @@ def _dumps(obj):
         res = dumps_dict(function_to_dict(obj))
         f_found = {}
         return res
-    elif isinstance(obj, staticmethod):
-        res = dumps_dict(smethod_to_dict(obj))
-        f_found = {}
-        return res
-    elif isinstance(obj, classmethod):
-        res = dumps_dict(cmethod_to_dict(obj))
-        f_found = {}
-        return res
-    elif inspect.ismodule(obj):
-        return dumps_dict(module_to_dict(obj))
     elif inspect.isclass(obj):
         return dumps_dict(class_to_dict(obj))
     elif is_instance(obj):
         return dumps_dict(object_to_dict(obj))
-    elif isinstance(obj, types.CodeType):
-        return dumps_dict(code_to_dict(obj))
-    elif isinstance(obj, types.CellType):
-        return dumps_dict(cell_to_dict(obj))
     else:
         raise TypeError()
 
@@ -272,14 +201,6 @@ def dump(obj, fp):
 
 
 #deserialize
-
-def dict_to_module(obj):
-    try:
-        return __import__(obj)
-    except ModuleNotFoundError:
-        raise ImportError(str(obj) + " not found")
-
-
 
 def parse_symbol(string, idx):
     if string[idx] == '"':
@@ -375,12 +296,6 @@ def parse_dict(string, idx):
         return dict_to_class(args["class_type"]), idx + 1
     if "instance_type" in args and len(args.keys()) == 1:
         return dict_to_obj(args["instance_type"]), idx + 1
-    if "module_type" in args and len(args.keys()) == 1:
-        return dict_to_module(args["module_type"]), idx + 1
-    if "code_type" in args and len(args.keys()) == 1:
-        return dict_to_code(args["code_type"]), idx + 1
-    if "cell_type" in args and len(args.keys()) == 1:
-        return dict_to_cell(args["cell_type"]), idx + 1
     if "tuple_type" in args and len(args.keys()) == 1:
         return tuple(args["tuple_type"]), idx + 1
     if "frozenset_type" in args and len(args.keys()) == 1:
@@ -432,34 +347,6 @@ def dict_to_obj(obj):
         return res
     except IndexError:
         raise StopIteration("Incorrect object")
-
-
-
-def dict_to_cell(obj):
-    return types.CellType(obj)
-
-
-
-def dict_to_code(obj):
-    return types.CodeType(
-        obj["co_argcount"],
-        obj["co_posonlyargcount"],
-        obj["co_kwonlyargcount"],
-        obj["co_nlocals"],
-        obj["co_stacksize"],
-        obj["co_flags"],
-        bytes(bytearray(obj["co_code"])),
-        obj["co_consts"],
-        obj["co_names"],
-        obj["co_varnames"],
-        obj["co_filename"],
-        obj["co_name"],
-        obj["co_firstlineno"],
-        bytes(bytearray(obj["co_lnotab"])),
-        obj["co_freevars"],
-        obj["co_cellvars"],
-    )
-
 
 
 def collect_funcs(obj, is_visited):

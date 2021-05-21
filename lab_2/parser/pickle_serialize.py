@@ -152,7 +152,6 @@ def _pickle_to_json(str):
         str = str[0 : len(str) - 2]
     n = str.count('{') - str.count('}')
     str = str + '}'*n
-    # str = str.replace(', ', ',')s
     return str
 
 

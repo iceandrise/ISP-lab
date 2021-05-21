@@ -52,11 +52,3 @@ class TestSerializer(unittest.TestCase):
         des_lmbd = serializer.loads(json_lmbd, 'json')
 
         self.assertEqual(test1.lmbd(1), des_lmbd(1))
-
-
-    def test_json_func_with_defaults(self):
-
-        json_func = serializer.dumps(test1.func_with_defaults, 'json')
-        des_func = serializer.loads(json_func, 'json')
-
-        self.assertEqual(test1.func_with_defaults(), des_func())
